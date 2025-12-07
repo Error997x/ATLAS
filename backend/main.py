@@ -5,6 +5,10 @@ from anthropic import Anthropic
 import os
 
 app = FastAPI()
+@app.get("/healthz)
+def healthz():
+    return {"status": "ok"}
+
 
 app.add_middleware(
     CORSMiddleware,
