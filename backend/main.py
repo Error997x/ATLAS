@@ -23,7 +23,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
 
-@app.get("/health")
+@app.get("/healthz")
 def health():
     return {"status": "ok"}
 
