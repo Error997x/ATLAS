@@ -5,12 +5,13 @@ from anthropic import Anthropic
 import os
 
 app = FastAPI()
+
+# health check per Render
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
 
-
-
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,18 +20,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# client
 client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-
 
 class ChatRequest(BaseModel):
     message: str
 
 class ChatResponse(BaseModel):
     reply: str
-
-@app.get("/healthz")
-def health():
-    return {"status": "ok"}
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
