@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Atlas</title>
+  <style>
+    body {
+      margin:0;
+      background:#000;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+      color:white;
+      font-family:sans-serif;
+    }
+    #face {
+      width:260px;
+      height:260px;
+      border-radius:50%;
+      border:4px solid white;
+      position:relative;
+      animation: idle 3s ease-in-out infinite;
+    }
+    .eye {
+      width:18px;
+      height:45px;
+      background:white;
+      border-radius:999px;
+      position:absolute;
+      top:80px;
+    }
+    #eye-left { left:75px; }
+    #eye-right { right:75px; }
+    #mouth {
+      width:70px;
+      height:8px;
+      background:white;
+      border-radius:999px;
+      position:absolute;
+      bottom:70px;
+      left:50%;
+      transform:translateX(-50%);
+      transition: height 0.08s;
+    }
+    @keyframes idle {0%{transform:scale(1);}50%{transform:scale(1.03);}100%{transform:scale(1);}}
+    @keyframes thinking {0%{transform:scale(1);}50%{transform:scale(1.07);}100%{transform:scale(1);}}
+    @keyframes speaking {0%{transform:scale(1);}100%{transform:scale(1.03);}}
+    #input {
+      margin-top:30px;
+      display:flex;
+      gap:10px;
+    }
+    #msg {
+      padding:10px 14px;
+      border-radius:999px;
+      border:none;
+      outline:none;
+      width:260px;
+    }
+    #send {
+      padding:10px 18px;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
+    }
+    #replyBox {
+      margin-top:20px;
+      max-width:400px;
+      text-align:center;
+      font-size:18px;
+      opacity:0.85;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="face">
+    <div id="eye-left" class="eye"></div>
+    <div id="eye-right" class="eye"></div>
+    <div id="mouth"></div>
+  </div>
+
+  <div id="input">
+    <input id="msg" placeholder="Scrivi..." autocomplete="off">
+    <button id="send">Invia</button>
+  </div>
+
+  <div id="replyBox"></div>
+
+<script>
+const face = document.getElementById("face");
+const msg = document.getElementById("msg");
+const send = document.getElementById("send");
+const mouth = document.getElementById("mouth");
+const replyBox = document.getElementById("replyBox");
+const eyeLeft = document.getElementById("eye-left");
+const eyeRight = document.getElementById("eye-right");
+
+async function sendMessage() {
+  const text = msg.value.trim();
+  if (!text) return;
+  msg.value = "";
+  replyBox.innerText = "";
+
+  face.style.animation = "thinking 1s ease-in-out infinite";
+
+  try {
+    const res = await fetch("http://localhost:8000/chat", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ message: text })
+    });
+
+    const data = await res.json();
+
+    face.style.animation = "speaking 0.3s ease-in-out alternate infinite";
+
+    let speakInterval = setInterval(() => {
+      mouth.style.height = (8 + Math.random()*28) + "px";
+    }, 110);
+
+    replyBox.innerText = data.reply;
+
+    setTimeout(() => {
+      clearInterval(speakInterval);
+      mouth.style.height = "8px";
+      face.style.animation = "idle 3s ease-in-out infinite";
+    }, 2600);
+
+  } catch (e) {
+    face.style.animation = "idle 3s ease-in-out infinite";
+  }
+}
+
+send.onclick = sendMessage;
+msg.addEventListener("keydown", e => {
+  if (e.key === "Enter") sendMessage();
+});
+
+document.addEventListener("mousemove", e => {
+  const r = face.getBoundingClientRect();
+  const cx = r.left + r.width/2;
+  const cy = r.top + r.height/2;
+  const dx = (e.clientX - cx) / (r.width);
+  const dy = (e.clientY - cy) / (r.height);
+  eyeLeft.style.transform = `translate(${dx*15}px, ${dy*10}px)`;
+  eyeRight.style.transform = `translate(${dx*15}px, ${dy*10}px)`;
+});
+</script>
+
+</body>
+</html>
